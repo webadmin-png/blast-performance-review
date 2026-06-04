@@ -1,0 +1,20 @@
+# HTTP / API clients (Attentive, Shopify Admin API, Hugging Face Inference)
+requests>=2.32.0
+
+# Environment variables (.env)
+python-dotenv>=1.0.1
+
+# Data wrangling & report building
+pandas>=2.2.0
+
+# Google Sheets (ORDER / RETURN / SUMMARY / STOCK sheets)
+gspread>=6.1.0
+google-auth>=2.30.0
+google-auth-oauthlib>=1.2.0
+google-api-python-client>=2.130.0
+
+# Salesforce
+simple-salesforce>=1.12.6
+
+# Hugging Face Inference API
+huggingface-hub>=0.23.0
