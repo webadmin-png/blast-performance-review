@@ -67,14 +67,28 @@ REDO_BAREER_TOKEN = os.getenv('BAREER_TOKEN')
 REDO_STORE_ID = os.getenv('STORE_ID')
 REDO_URL = f"https://api.getredo.com/v2.2/stores/{REDO_STORE_ID}/returns"
 
+# -----------------------------------------------------------------------------
+# ATTENTIVE API CONFIGURATION
+# Bearer auth with an API key from a custom app:
+#   https://ui.attentivemobile.com/integrations/custom-app/management
+# -----------------------------------------------------------------------------
+ATTENTIVE_API_KEY = os.getenv('ATTENTIVE_API_KEY')
+ATTENTIVE_BASE_URL = os.getenv('ATTENTIVE_BASE_URL', 'https://api.attentivemobile.com/v1')
+ATTENTIVE_HEADERS = {
+    "Authorization": f"Bearer {ATTENTIVE_API_KEY}",
+    "Content-Type": "application/json",
+}
+
 
 def reload():
     # Re-read .env and refresh the Shopify token without restarting the kernel.
     # HEADERS is mutated in place so modules that did `from config.settings import HEADERS`
     # keep seeing the same dict object with the updated token.
-    global SHOPIFY_ACCESS_TOKEN, SHOPIFY_ADMIN_TOKEN, REDO_BAREER_TOKEN
+    global SHOPIFY_ACCESS_TOKEN, SHOPIFY_ADMIN_TOKEN, REDO_BAREER_TOKEN, ATTENTIVE_API_KEY
     load_dotenv(override=True)
     SHOPIFY_ACCESS_TOKEN = os.getenv('SHOPIFY_ACCESS_TOKEN')
     SHOPIFY_ADMIN_TOKEN = os.getenv('SHOPIFY_ADMIN_TOKEN')
     REDO_BAREER_TOKEN = os.getenv('BAREER_TOKEN')
+    ATTENTIVE_API_KEY = os.getenv('ATTENTIVE_API_KEY')
     HEADERS["X-Shopify-Access-Token"] = SHOPIFY_ACCESS_TOKEN
+    ATTENTIVE_HEADERS["Authorization"] = f"Bearer {ATTENTIVE_API_KEY}"
