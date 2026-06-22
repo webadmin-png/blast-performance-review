@@ -31,7 +31,9 @@ REPORT_DIR = BASE_DIR / 'reports'
 # ------------------------------------------------------------------
 # GOOGLE SHEETS CONFIGURATION
 # ------------------------------------------------------------------
-CREDS_PATH = "/Users/webadmin/Documents/Automations/master-file-season/credentials/dialy-report-automation-e20c53e67542.json"
+# Path to the Google service-account JSON. Override via .env (CREDS_PATH) so the
+# location is portable across host and container.
+CREDS_PATH = os.getenv("CREDS_PATH", str(BASE_DIR / "credentials" / "service_account.json"))
 
 
 

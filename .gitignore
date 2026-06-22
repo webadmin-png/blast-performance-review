@@ -7,6 +7,7 @@
 credentials.json
 token.json
 service_account*.json
+credentials/
 
 # --- Python ---
 __pycache__/

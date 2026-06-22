@@ -1,0 +1,25 @@
+# Keep the Docker build context small. Does NOT affect runtime volume mounts.
+# Secrets — defensive: never bake into an image if a future COPY . . is added.
+.env
+.env.*
+credentials/
+venv/
+.venv/
+env/
+ENV/
+.git/
+__pycache__/
+*.py[cod]
+*$py.class
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+data/
+reports/
+notebooks/
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+docs/
