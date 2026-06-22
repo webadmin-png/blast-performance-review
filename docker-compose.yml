@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    image: blast-report
+    working_dir: /app
+    # Mount the whole project root: source (live edit), .env (writable for
+    # token refresh), data/ and reports/ (outputs on host), credentials/.
+    volumes:
+      - .:/app
+    # Keep STDIN/TTY for interactive `bash` and readable logs.
+    stdin_open: true
+    tty: true
