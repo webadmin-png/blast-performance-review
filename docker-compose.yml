@@ -7,6 +7,8 @@ services:
     # token refresh), data/ and reports/ (outputs on host), credentials/.
     volumes:
       - .:/app
+      # Mask the host venv (built for macOS) so it can't shadow the Linux image's packages.
+      - /app/venv
     # Keep STDIN/TTY for interactive `bash` and readable logs.
     stdin_open: true
     tty: true

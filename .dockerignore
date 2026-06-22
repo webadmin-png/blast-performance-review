@@ -1,4 +1,8 @@
 # Keep the Docker build context small. Does NOT affect runtime volume mounts.
+# Secrets — defensive: never bake into an image if a future COPY . . is added.
+.env
+.env.*
+credentials/
 venv/
 .venv/
 env/
