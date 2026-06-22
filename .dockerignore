@@ -1,0 +1,21 @@
+# Keep the Docker build context small. Does NOT affect runtime volume mounts.
+venv/
+.venv/
+env/
+ENV/
+.git/
+__pycache__/
+*.py[cod]
+*$py.class
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+data/
+reports/
+notebooks/
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+docs/
