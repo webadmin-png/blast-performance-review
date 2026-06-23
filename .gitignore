@@ -48,3 +48,7 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# --- Local tooling / artifacts ---
+.claude/
+requirements.txt.bak

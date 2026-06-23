@@ -7,8 +7,20 @@ services:
     # token refresh), data/ and reports/ (outputs on host), credentials/.
     volumes:
       - .:/app
-      # Mask the host venv (built for macOS) so it can't shadow the Linux image's packages.
+      # Mask the host venvs (built for macOS) so they can't shadow the Linux
+      # image's packages. Both names are masked in case either exists on host.
       - /app/venv
-    # Keep STDIN/TTY for interactive `bash` and readable logs.
+      - /app/.venv
+    # Expose the Streamlit UI to the host browser at http://localhost:8501
+    ports:
+      - "8501:8501"
+    # Run the Streamlit app by default. Bind to 0.0.0.0 so it's reachable from
+    # outside the container; headless avoids the first-run email prompt.
+    command: >
+      streamlit run app.py
+      --server.address=0.0.0.0
+      --server.port=8501
+      --server.headless=true
+    # Keep STDIN/TTY for readable logs and ad-hoc interactive runs.
     stdin_open: true
     tty: true

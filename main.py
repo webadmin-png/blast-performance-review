@@ -41,9 +41,9 @@ def get_campaign_data(sample: bool = False, start_date: str = None, end_date: st
     
 if __name__ == "__main__":
     start = "2026-01-01"
-    end = "2026-06-31"
+    end = "2026-06-30"
 
-    attentive_orders, all_orders = get_campaign_data(sample=True, start_date=start, end_date=end)
+    attentive_orders, all_orders = get_campaign_data(sample=False, start_date=start, end_date=end)
 
     # Persist the transformed source data
     os.makedirs(PROCESSED_DATA_DIR, exist_ok=True)
@@ -56,10 +56,10 @@ if __name__ == "__main__":
 
     # Build and export one blast-performance report per channel (email + sms)
     os.makedirs(REPORT_DIR, exist_ok=True)
-    period_tag = "2026-05-25_to_2026-05-25"
+    period_tag = "2026-06-22_to_2026-06-22"
     for channel in ("email", "sms"):
         report = build_blast_report(
-            attentive_orders, all_orders, "2026-05-25", "2026-05-25", channel=channel
+            attentive_orders, all_orders, "2026-06-22", "2026-06-22", channel=channel
         )
         report_path = REPORT_DIR / f"blast_report_{channel}_{period_tag}.csv"
         report.to_csv(report_path, index=False)
