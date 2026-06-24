@@ -22,7 +22,7 @@ from config import settings
 # Days of safety padding added to BOTH ends of the fetch range. Backward padding
 # does not change the report (data before the blast start is filtered out) but is
 # kept as a margin against timezone/edge effects.
-FETCH_PAD_DAYS = 7
+FETCH_PAD_DAYS = 2
 
 CHANNELS = {"Email": "email", "SMS": "sms"}
 
