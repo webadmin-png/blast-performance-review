@@ -86,7 +86,7 @@ with st.sidebar:
     )
     carryover_days = st.number_input(
         "Carryover window (days)",
-        min_value=0, max_value=60, value=7,
+        min_value=0, max_value=60, value=2,
         help="Days after the blast to keep counting attributed orders.",
     )
     channel_labels = st.multiselect(
