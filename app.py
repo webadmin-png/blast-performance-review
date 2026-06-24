@@ -3,10 +3,10 @@ app.py — Streamlit UI for the blast-performance report.
 
 Run with:  streamlit run app.py
 
-User picks a blast period + channel; the app fetches orders live from Shopify,
-transforms them, and builds the per-channel blast report with a configurable
-carryover window. Heavy fetches are cached so toggling the channel does not
-re-hit the API.
+User picks a start/end date + channel; the app fetches orders live from Shopify
+(padded by FETCH_PAD_DAYS on each side), transforms them, and builds the
+per-channel blast report for exactly that period. Heavy fetches are cached so
+toggling the channel does not re-hit the API.
 """
 from datetime import date, timedelta
 
@@ -19,9 +19,9 @@ from utils.report_generator import build_blast_report
 from auth.token_manager import get_token
 from config import settings
 
-# Days of safety padding added to BOTH ends of the fetch range. Backward padding
-# does not change the report (data before the blast start is filtered out) but is
-# kept as a margin against timezone/edge effects.
+# Days of safety padding added to BOTH ends of the fetch range, as a margin
+# against timezone/edge effects. The report itself only counts the chosen
+# [start, end] period; data outside it is filtered out by build_blast_report.
 FETCH_PAD_DAYS = 2
 
 CHANNELS = {"Email": "email", "SMS": "sms"}
@@ -48,22 +48,6 @@ def channel_summary(report: pd.DataFrame, channel: str) -> tuple[int, float]:
     return units, gross
 
 
-def filter_to_blast_dates(attentive: pd.DataFrame, blast_dates, carryover_days: int) -> pd.DataFrame:
-    """Keep only attentive rows for the chosen blast day(s), each bounded by its own carryover window.
-
-    A row is kept if its blast_date is one of `blast_dates` AND its order day falls in
-    [blast_date, blast_date + carryover_days]. This excludes any other blasts that fall
-    between the chosen dates, and stops one blast's carryover from bleeding into another.
-    """
-    bd = pd.to_datetime(attentive["blast_date"], errors="coerce").dt.normalize()
-    od = pd.to_datetime(attentive["day"], errors="coerce").dt.normalize()
-    keep = pd.Series(False, index=attentive.index)
-    for d in blast_dates:
-        t = pd.Timestamp(d)
-        keep |= (bd == t) & (od >= t) & (od <= t + pd.Timedelta(days=int(carryover_days)))
-    return attentive[keep].copy()
-
-
 st.set_page_config(page_title="Blast Performance Report", layout="wide")
 st.title("📊 Blast Performance Report")
 st.caption("Fetch Shopify orders live and build the per-channel blast report.")
@@ -72,22 +56,15 @@ st.caption("Fetch Shopify orders live and build the per-channel blast report.")
 with st.sidebar:
     st.header("Parameters")
     today = date.today()
-    blast_date_1 = st.date_input(
-        "Blast date 1",
+    start_date = st.date_input(
+        "Start date",
         value=today,
-        help="The (first) blast day to analyze.",
+        help="First day of the sales period to report on.",
     )
-    use_two = st.checkbox("Add a 2nd blast date")
-    blast_date_2 = st.date_input(
-        "Blast date 2",
+    end_date = st.date_input(
+        "End date",
         value=today,
-        help="A second, independent blast day (need not be adjacent to the first).",
-        disabled=not use_two,
-    )
-    carryover_days = st.number_input(
-        "Carryover window (days)",
-        min_value=0, max_value=60, value=2,
-        help="Days after the blast to keep counting attributed orders.",
+        help="Last day of the sales period to report on.",
     )
     channel_labels = st.multiselect(
         "Channel(s)",
@@ -96,10 +73,9 @@ with st.sidebar:
     )
     generate = st.button("Generate Report", type="primary", use_container_width=True)
 
-# One or two distinct blast days (deduped, sorted). Each is analyzed with its own
-# carryover window; days between them are NOT pulled in.
-blast_dates = sorted({blast_date_1, blast_date_2} if use_two else {blast_date_1})
-blast_start, blast_end = blast_dates[0], blast_dates[-1]
+# The report covers exactly [start, end]; normalize so start <= end regardless
+# of input order.
+period_start, period_end = min(start_date, end_date), max(start_date, end_date)
 
 # ── Run pipeline ────────────────────────────────────────────────────────────
 if generate:
@@ -107,14 +83,12 @@ if generate:
         st.warning("Pick at least one channel.")
         st.stop()
 
-    report_end = blast_end + timedelta(days=int(carryover_days))
-    fetch_start = blast_start - timedelta(days=FETCH_PAD_DAYS)
-    fetch_end = report_end + timedelta(days=FETCH_PAD_DAYS)
+    fetch_start = period_start - timedelta(days=FETCH_PAD_DAYS)
+    fetch_end = period_end + timedelta(days=FETCH_PAD_DAYS)
 
     st.info(
-        f"Blast day(s): **{' & '.join(str(d) for d in blast_dates)}**  ·  "
-        f"carryover **{int(carryover_days)}d** (to {report_end})  ·  "
-        f"fetching Shopify **{fetch_start} → {fetch_end}**"
+        f"Report period: **{period_start} → {period_end}**  ·  "
+        f"fetching Shopify **{fetch_start} → {fetch_end}** (±{FETCH_PAD_DAYS}d padding)"
     )
 
     try:
@@ -129,12 +103,9 @@ if generate:
         st.stop()
 
     attentive_orders, all_orders = transform_campaign_data(df)
-    # Restrict blast attribution to the chosen day(s), each with its own carryover window.
-    attentive_orders = filter_to_blast_dates(attentive_orders, blast_dates, carryover_days)
-    dates_str = " & ".join(str(d) for d in blast_dates)
     st.success(
         f"Fetched {len(df):,} line-item rows · {len(all_orders):,} orders · "
-        f"blast day(s): {dates_str}."
+        f"period {period_start} → {period_end}."
     )
 
     # ── Pipeline data downloads (the same outputs main.py writes to disk) ──────
@@ -160,7 +131,7 @@ if generate:
         st.subheader(f"{label} report")
         try:
             report = build_blast_report(
-                attentive_orders, all_orders, blast_start, report_end, channel=channel
+                attentive_orders, all_orders, period_start, period_end, channel=channel
             )
         except Exception as e:
             st.error(f"Failed to build the {label} report: {e}")
@@ -180,7 +151,7 @@ if generate:
         st.download_button(
             f"Download {label} CSV",
             data=report.to_csv(index=False).encode("utf-8"),
-            file_name=f"blast_report_{channel}_{blast_start}_to_{report_end}.csv",
+            file_name=f"blast_report_{channel}_{period_start}_to_{period_end}.csv",
             mime="text/csv",
         )
 else:
